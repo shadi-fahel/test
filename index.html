@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بنك أسئلة قواعد السير</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #c8e6c9;
+            --success-border: #4caf50;
+            --error: #ffcdd2;
+            --error-border: #f44336;
+            --bg: #eceff1;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 0;
+            direction: rtl;
+        }
+
+        .header-sticky {
+            position: sticky;
+            top: 0;
+            background: var(--white);
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            padding: 10px 0;
+            z-index: 1000;
+            border-bottom: 4px solid var(--accent);
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        h1 { margin: 0; font-size: 1.1rem; color: var(--primary); }
+
+        .reset-btn {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .reset-btn:hover { background: #f1b0b7; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #eee;
+        }
+
+        .stat-label { font-size: 0.65rem; color: #666; display: block; }
+        .stat-value { font-size: 0.9rem; font-weight: bold; }
+
+        .filter-tabs {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #e9ecef;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+            transition: 0.2s;
+        }
+
+        .tab.active { background: var(--accent); color: white; }
+        .tab-correct.active { background: #4caf50; }
+        .tab-wrong.active { background: #f44336; }
+
+        .q-card {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .q-img {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: #fdfdfd;
+            border: 1px solid #eee;
+        }
+
+        .filtered-hidden { display: none !important; }
+
+        .q-text { font-size: 1rem; font-weight: bold; margin-bottom: 15px; display: block; line-height: 1.5; }
+
+        .options-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+        .opt {
+            padding: 12px 15px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #f9f9f9;
+            font-size: 0.9rem;
+        }
+
+        .opt.is-correct { 
+            background-color: var(--success) !important; 
+            border-color: var(--success-border) !important; 
+            font-weight: bold; 
+        }
+
+        .opt.is-wrong { 
+            background-color: var(--error) !important; 
+            border-color: var(--error-border) !important; 
+        }
+
+        .disabled { pointer-events: none; }
+        
+        #confirm-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center; align-items: center;
+        }
+
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 85%; max-width: 320px; text-align: center; }
+        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .m-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .m-btn.yes { background: #f44336; color: white; }
+        .m-btn.no { background: #eee; }
+    </style>
+</head>
+<body>
+
+<div id="confirm-modal">
+    <div class="modal-content">
+        <p>هل تريد تصفير كافة الإجابات والبدء من جديد؟</p>
+        <div class="modal-btns">
+            <button class="m-btn yes" onclick="confirmReset()">نعم</button>
+            <button class="m-btn no" onclick="closeModal()">إلغاء</button>
+        </div>
+    </div>
+</div>
+
+<div class="header-sticky">
+    <div class="container">
+        <div class="header-top">
+            <h1>🚦 بنك أسئلة قواعد السير</h1>
+            <button class="reset-btn" onclick="openModal()">تصفير 🔄</button>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-item"><span class="stat-label">المجابة</span><span class="stat-value" id="stat-answered">0/160</span></div>
+            <div class="stat-item"><span class="stat-label">صح</span><span class="stat-value" style="color:#4caf50" id="stat-correct">0</span></div>
+            <div class="stat-item"><span class="stat-label">خطأ</span><span class="stat-value" style="color:#f44336" id="stat-wrong">0</span></div>
+            <div class="stat-item"><span class="stat-label">النسبة</span><span class="stat-value" id="stat-percent">0%</span></div>
+        </div>
+
+        <div class="filter-tabs">
+            <button class="tab active" id="tab-all" data-mode="all">الكل</button>
+            <button class="tab tab-correct" data-mode="correct">صحيحة</button>
+            <button class="tab tab-wrong" data-mode="wrong">خاطئة</button>
+        </div>
+    </div>
+</div>
+
+<div class="container" id="quiz-container"></div>
+<div id="empty-msg" style="display:none; text-align:center; padding:50px; color:#888;" class="container">لا توجد أسئلة لعرضها هنا.</div>
+
+<script>
+    // تم إضافة حقل img لكل سؤال. إذا كان السؤال يحتوي صورة، ضع اسم الملف (مثلاً: q1.jpg). إذا لم يوجد، اتركه فارغاً "".
+    const questions = [
+        { q: "عند دخولك في نفق أثناء القيادة نهاراً عليك:", options: ["الاستمرار بالسير بطريقة طبيعية", "استعمال الزمور", "إضاءة المصابيح وتخفيف السرعة", "إضاءة المصابيح وزيادة السرعة"], answer: 2, img: "" },
+        { q: "ماذا تعني الخطوط الطولية في الصورة (خطين متصلين)؟", options: ["يمكن العبور من جهة اليمين إلى اليسار فقط", "يمكن عبور الخطين في حالة تجاوز المركبة لمركبة أخرى فقط", "لا يمكن عبور الخطين بتاتاً", "يمكن العبور من جهة اليسار إلى اليمين فقط"], answer: 2, img: ".jpg" },
+        { q: "ماذا تعني الخطوط الطولية في الصورة (خط متصل بجانبه خط متقطع)؟", options: ["يمكن العبور من جهة الخط المتقطع إلى يمين الخط المتصل", "لا يمكن عبور الخطين بتاتاً", "يمكن العبور من جهة الخط المتصل إلى يسار الخط المتقطع", "يمكن عبور الخطين بالاتجاهين"], answer: 0, img: "line_mix.jpg" },
+        { q: "في الحالة الموضحة بالصورة (عند الجسر):", options: ["يجب على السيارة القادمة أن تعطيك الأفضلية", "الأفضلية بهذه الحالة للذي يصل إلى المعبر أولاً", "يجب عليك إعطاء الأفضلية للسيارة القادمة", "يجب عليك إضاءة النور العالي لأن الأفضلية لك"], answer: 2, img: "q2.jpg" }
+        // يمكنك إكمال باقي الأسئلة بنفس النمط بإضافة img: "" في نهايتها.
+    ];
+
+    let userState = {}; 
+    let scrollPositions = { all: 0, correct: 0, wrong: 0 };
+    let currentMode = 'all';
+
+    function renderQuiz() {
+        const container = document.getElementById('quiz-container');
+        container.innerHTML = '';
+        questions.forEach((item, idx) => {
+            const card = document.createElement('div');
+            card.className = 'q-card';
+            card.id = `q-idx-${idx}`;
+            
+            // التحقق مما إذا كان هناك صورة لعرضها
+            const imageHtml = item.img ? `<img src="images/${item.img}" class="q-img" alt="سؤال ${idx + 1}">` : '';
+
+            card.innerHTML = `
+                <span class="q-text">س${idx + 1}: ${item.q}</span>
+                ${imageHtml}
+                <ul class="options-list" id="list-${idx}">
+                    ${item.options.map((opt, oIdx) => `<li class="opt" onclick="handleSelect(${idx}, ${oIdx})">${opt}</li>`).join('')}
+                </ul>
+            `;
+            container.appendChild(card);
+        });
+        updateStats();
+    }
+
+    // (باقي وظائف الـ JavaScript تبقى كما هي دون تغيير)
+    window.handleSelect = function(qIdx, sIdx) {
+        const list = document.getElementById(`list-${qIdx}`);
+        if (list.classList.contains('solved')) return;
+        const correct = questions[qIdx].answer;
+        userState[qIdx] = { selected: sIdx, isCorrect: (sIdx === correct) };
+        list.classList.add('solved');
+        list.querySelectorAll('.opt').forEach((opt, i) => {
+            opt.classList.add('disabled');
+            if (i === correct) opt.classList.add('is-correct');
+            else if (i === sIdx && sIdx !== correct) opt.classList.add('is-wrong');
+        });
+        updateStats();
+    };
+
+    function updateStats() {
+        const solved = Object.keys(userState);
+        const right = solved.filter(k => userState[k].isCorrect).length;
+        document.getElementById('stat-answered').innerText = solved.length + "/" + questions.length;
+        document.getElementById('stat-correct').innerText = right;
+        document.getElementById('stat-wrong').innerText = solved.length - right;
+        document.getElementById('stat-percent').innerText = solved.length > 0 ? Math.round((right / solved.length) * 100) + '%' : '0%';
+    }
+
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            scrollPositions[currentMode] = window.scrollY;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            currentMode = this.getAttribute('data-mode');
+            applyFilter(currentMode);
+            setTimeout(() => { window.scrollTo({ top: scrollPositions[currentMode], behavior: 'instant' }); }, 0);
+        });
+    });
+
+    function applyFilter(mode) {
+        let visibleCount = 0;
+        questions.forEach((_, idx) => {
+            const card = document.getElementById(`q-idx-${idx}`);
+            const state = userState[idx];
+            let show = (mode === 'all') || (mode === 'correct' && state?.isCorrect) || (mode === 'wrong' && state && !state.isCorrect);
+            if (show) { card.classList.remove('filtered-hidden'); visibleCount++; }
+            else { card.classList.add('filtered-hidden'); }
+        });
+        document.getElementById('empty-msg').style.display = (visibleCount === 0) ? 'block' : 'none';
+    }
+
+    window.openModal = () => document.getElementById('confirm-modal').style.display = 'flex';
+    window.closeModal = () => document.getElementById('confirm-modal').style.display = 'none';
+    window.confirmReset = () => { 
+        userState = {}; scrollPositions = { all: 0, correct: 0, wrong: 0 };
+        closeModal(); renderQuiz(); 
+        document.querySelector('[data-mode="all"]').click();
+    };
+
+    window.onload = renderQuiz;
+</script>
+</body>
+</html>
